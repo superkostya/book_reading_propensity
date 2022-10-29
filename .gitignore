@@ -1,0 +1,7 @@
+# Jupyter checkpoints
+.ipynb_checkpoints
+
+# Ignore ANY compressed file, or JSON file, in the directory 'data'
+data/*.json
+data/*.gz
+data/*.tar
