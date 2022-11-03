@@ -1,3 +1,5 @@
 gdown
+scipy
+numpy
 pandas
 scikit-surprise
