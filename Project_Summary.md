@@ -41,6 +41,7 @@
  * If the validation set size is $n$ and the number of correct predictions is $n_c$, then a point estimate of the the confidence $C$ is $$\hat{C} = \frac{n_c}{n}$$
  * We can estimate the value of the confidence on the train set, using the model we trained, which is a common practice for recommender systems. In order to minimize a bias of such estimate, we can use a K-fold cross-validation procedure. 
  * We could potentially achieve a higher accuracy for the confidence estimates, by calculating the confidence to every reader individually:  $$\hat{C_{u}} = \frac{n^c_{u}}{n_{u}},$$ where $n_{u}$ is a total number of ratings left by the user, and $n^c_{u}$ is the number of the user propensities that our model guessed correctly. This of course, can only be applied to a known reader. For the case of a "cold start", we have to rely on the global estimate $C$.
+ * In the current implementation, the confidence is estimated as a weighted average of the global and user-based confidence levels: $$\hat{C_{u}} = \frac{n_{min} C + n^c_{u}}{n_{min} + n_{u}},$$ where $n_{min}$ is the minimal necessary number of ratings.
 
 ## Test Results
 
