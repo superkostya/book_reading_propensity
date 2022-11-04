@@ -57,17 +57,18 @@ class Propensity():
         self.reader = Reader(line_format="user item rating", 
                              sep=sep, skip_lines=skip_lines, 
                              rating_scale=rating_scale)
-        self.data = Dataset.load_from_file(self.train_data_path, reader=self.reader)
+        # self.data = Dataset.load_from_file(self.train_data_path, reader=self.reader)
         self.confidence = None
         self.conf_cv_n = conf_cv_n
         self.trained = False
         
-        
-    # Train & Evaluate
+    # ------------------------------------------------------------------------------------------------------    
+    # Cross-validate on the Train Set
     def cross_validate(self, cv=5, measures=["RMSE", "MAE", "FCP"], verbose=True):
         algo = self.algo_class(**self.algo_params)
-        cross_validate(algo, self.data, measures=measures, cv=cv, verbose=verbose)
-        
+        data = Dataset.load_from_file(self.train_data_path, reader=self.reader)
+        cross_validate(algo, data, measures=measures, cv=cv, verbose=verbose)
+    # ------------------------------------------------------------------------------------------------------    
     # Train & Evaluate on Test Set
     def train_and_test(self, testset_path, verbose=True):
         
@@ -86,13 +87,31 @@ class Propensity():
             predictions = self.model.test(testset)
 
             # Compute and print Root Mean Squared Error
-            if verbose:
-                print('Evaluating the model performance on the test set')
+            print('Evaluating the model performance on the test set')
             accuracy.rmse(predictions, verbose=verbose)
             accuracy.mae(predictions,  verbose=verbose)
             accuracy.fcp(predictions,  verbose=verbose)
-    
-    # Estimate the Confidence using the train data
+        # -------------------------------------------    
+        # Estimate the accuracy on the Test Set
+        # Read the Data
+        df_test = pd.read_csv(testset_path)
+        # Predict the Ratings 
+        df_test['rating_predicted'] = df_test.apply(lambda x: self.model.predict(x.user_id, 
+                                                                  x.book_id, 
+                                                                  verbose=False).est, axis=1)
+        
+        # Get the predicted binary recommendations ('yes/no' = 1/0)
+        df_test['would_recommend'] = df_test['rating'].apply(lambda x: 1 if x >= 4 else 0)
+        df_test['would_recommend_pred'] = df_test['rating_predicted'].apply(lambda x: 1 if x >= 4 else 0)
+        
+
+        # Estimate the Accuracy 
+        acc = df_test[df_test['would_recommend_pred'] == df_test['would_recommend']]['rating'].\
+                                count()/df_test.shape[0]
+
+        print(f'Accuracy (Test Set): {acc*100:.2f}%')
+    # ------------------------------------------------------------------------------------------------------
+    # Estimate the global Confidence for the train data
     def estimate_confidence(self, n_cv_folds=10, verbose=False):
         if verbose:
             print(f'Estimating the Confidence on the Train Set...')
@@ -138,20 +157,61 @@ class Propensity():
         self.confidence = confidence_on_train
         return confidence_on_train
 
-        
+    # ------------------------------------------------------------------------------------------------------
     # Train the Model
-    def train_model(self): 
-        trainset = self.data.build_full_trainset()
+    def train_model(self, verbose=False): 
+        data = Dataset.load_from_file(self.train_data_path, reader=self.reader)
+        trainset = data.build_full_trainset()
         self.model.fit(trainset)
-        
-        
-    # Infer the propensity
-    def infer_propensity_from_df(self, data_path, verbose=True):
+        del trainset
+        # ------------------------------------------------------------
         # Estimate the Confidence on the Train Set
         if self.confidence is None:
             conf = self.estimate_confidence(n_cv_folds=self.conf_cv_n, verbose=verbose)
         else:
             conf = self.confidence
+        # ------------------------------------------------------------
+        # Estimate the user confidence (a probability of a correct propensity prediction for a given user)
+        # Read the Data
+        df_train = pd.read_csv(self.train_data_path)
+        # Predict the Ratings 
+        df_train['rating_predicted'] = df_train.apply(lambda x: self.model.predict(x.user_id, 
+                                                                  x.book_id, 
+                                                                  verbose=False).est, axis=1)
+        
+        # Get the predicted binary recommendations ('yes/no' = 1/0)
+        df_train['would_recommend'] = df_train['rating'].apply(lambda x: 1 if x >= 4 else 0)
+        df_train['would_recommend_pred'] = df_train['rating_predicted'].apply(lambda x: 1 if x >= 4 else 0)
+        df_train['prediction_is_correct'] = (df_train['would_recommend_pred'] == \
+                                             df_train['would_recommend']).astype(int)
+        # User Confidence
+        # df_train['confidence'] = self.confidence
+        df_train['user_correct_pred_cnt'] = df_train.groupby(['user_id'])['prediction_is_correct'].\
+                                            transform("sum")
+        df_train['user_rating_cnt'] = df_train.groupby(['user_id'])['rating'].\
+                                            transform("count")
+        df_train['user_correct_pred_fraction'] = df_train['user_correct_pred_cnt'] / df_train['user_rating_cnt']
+        df_train['confidence'] = (10 * self.confidence + df_train['user_correct_pred_cnt']) / \
+                                (10 + df_train['user_rating_cnt'])
+        self.train_data_fitted = df_train #[['user_id', 'book_id', 'rating', 'rating_predicted', 'would_recommend_pred', 'confidence']]
+        self.user_confidence = df_train[['user_id', 'confidence']].drop_duplicates()
+    # ------------------------------------------------------------------------------------------------------
+    # Get the user-based confidence
+    def get_user_confidence(self, user_id):
+        if self.user_confidence.user_id.apply(lambda uid_list: user_id in uid_list).any():
+            confidence = float(self.user_confidence.loc[self.user_confidence.user_id == user_id, 'confidence'])
+        else:
+            confidence = self.confidence
+        return confidence
+    # ------------------------------------------------------------------------------------------------------
+    # Infer the propensity for a user-item pair
+    def infer_propensity_for_pair(self, user_id, item_id, verbose=True):
+        rating = self.model.predict(user_id, item_id, verbose=verbose).est
+        propensity = 1 if rating >= 4 else 0
+        return propensity, self.get_user_confidence(user_id)
+    # ------------------------------------------------------------------------------------------------------
+    # Batch Prediction: Infer the propensity for the entire dataset
+    def infer_propensity_from_df(self, data_path, verbose=True):
         # Read the Data
         df_test = pd.read_csv(data_path)
         # Predict the Ratings 
@@ -160,24 +220,11 @@ class Propensity():
                                                                   verbose=False).est, axis=1)
         
         # Get the predicted binary recommendations ('yes/no' = 1/0)
-        df_test['would_recommend'] = df_test['rating'].apply(lambda x: 1 if x >= 4 else 0)
         df_test['would_recommend_pred'] = df_test['rating_predicted'].apply(lambda x: 1 if x >= 4 else 0)
         
-        if verbose:
-            # Estimate the Accuracy 
-            accuracy = df_test[df_test['would_recommend_pred'] == df_test['would_recommend']]['rating'].\
-                                    count()/df_test.shape[0]
-
-            print(f'Accuracy: {accuracy*100:.2f}%')
-        df_test['confidence'] = conf
-        return df_test[['user_id', 'book_id', 'would_recommend_pred', 'confidence']]
+        df_test['confidence'] = self.confidence
+        df_test['confidence'] = df_test[['user_id']].merge(self.user_confidence, how='left')['confidence']
+        df_test['confidence'].fillna(self.confidence, inplace=True)
+        # df_test['user_id'].apply(lambda uid: self.get_user_confidence(uid))
         
-    def infer_propensity_for_pair(self, user_id, item_id, verbose=True):
-        if self.confidence is None:
-            conf = self.estimate_confidence(n_cv_folds=self.conf_cv_n, verbose=verbose)
-        else:
-            conf = self.confidence
-        rating = self.model.predict(user_id, item_id, verbose=verbose).est
-        propensity = 1 if rating >= 4 else 0
-        return propensity, conf
-    
+        return df_test[['user_id', 'book_id', 'would_recommend_pred', 'confidence']]
