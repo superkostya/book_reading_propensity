@@ -28,3 +28,5 @@ Installing the required libraries using pip:
  * ["Machine Learning: Recommendation Systems"](https://developers.google.com/machine-learning/recommendation) (A course on Google Developer, with examples that focus on the use of the Tensorflow)
  
  * ["Collaborative Filtering on Ordinal User Feedback"](https://www.ijcai.org/Proceedings/13/Papers/449.pdf) by Y. Koren and J. Sill. Proceedings of the Twenty-Third International Joint Conference on Artificial Intelligence, 2011
+ 
+ * [Scikit Suprise Library](https://surprise.readthedocs.io/en/stable/index.html

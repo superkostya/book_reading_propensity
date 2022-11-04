@@ -40,7 +40,7 @@
  * As a first approximation, we can estimate this probability globally, for the entire dataset. 
  * If the validation set size is $n$ and the number of correct predictions is $n_c$, then a point estimate of the the confidence $C$ is $$\hat{C} = \frac{n_c}{n}$$
  * We can estimate the value of the confidence on the train set, using the model we trained, which is a common practice for recommender systems. In order to minimize a bias of such estimate, we can use a K-fold cross-validation procedure. 
- * We could potentially achieve a higher accuracy for the confidence estimates, by calculating the confidence to every reader individually:  $$\hat{C_{u}} = \frac{n^c_{u}}{n_{u}},$$ where $n_{u}$ is a total number of ratings left by the user, and $n^c_{u}$ is the number of the user propensities that our model guessed correctly.
+ * We could potentially achieve a higher accuracy for the confidence estimates, by calculating the confidence to every reader individually:  $$\hat{C_{u}} = \frac{n^c_{u}}{n_{u}},$$ where $n_{u}$ is a total number of ratings left by the user, and $n^c_{u}$ is the number of the user propensities that our model guessed correctly. This of course, can only be applied to a known reader. For the case of a "cold start", we have to rely on the global estimate $C$.
 
 ## Test Results
 
@@ -59,7 +59,7 @@
      * FCP:  0.5855
  * It proved to have a low bias but suffered from a considerable variance. 
  * A binary classifier (propensity model) built based on the aforementioned recommendation system demostrated the accuracy of 65.85% on the test set. Further improvement could potentially be achieved through data resampling techniques.
- * use of a DNN-based, or a hybrid model could lead to a better accuracy, especially if external features are incorporated.
+ * Use of a DNN-based, or a hybrid model could lead to a better accuracy, especially if external features are incorporated.
 
 ## Appendix: A Few Notes on the Main Steps
 
@@ -97,3 +97,5 @@
  * ["Machine Learning: Recommendation Systems"](https://developers.google.com/machine-learning/recommendation) (A course on Google Developer, with examples that focus on the use of the Tensorflow)
  
  * ["Collaborative Filtering on Ordinal User Feedback"](https://www.ijcai.org/Proceedings/13/Papers/449.pdf) by Y. Koren and J. Sill. Proceedings of the Twenty-Third International Joint Conference on Artificial Intelligence, 2011
+ 
+ * [Scikit Suprise Library](https://surprise.readthedocs.io/en/stable/index.html
