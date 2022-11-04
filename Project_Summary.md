@@ -1,6 +1,6 @@
 # Propensity Model for Book Reading
 
-### Author: Kostyantyn Borysenko
+#### Author: Kostyantyn Borysenko
 
 ## Goals:
  * Based on the book ratings given by readers for a period of January through November 2016, predict the book reading propensities in the following month (December 2016).
