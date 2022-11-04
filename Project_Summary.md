@@ -8,7 +8,7 @@
 ### Propensity Model as a Recommender System
  * Considering the nature of the provided data (book ratings offered by readers), this problem lands itself with the recommendation systems.
  * Specifically, a broad class of recommenders known as "collaborative filtering" appears to be the best first step towards predicting book propensities, based entirely on so called "user-item interactions".
-### Explicit/Implicit Interactions
+### Input Data and Explicit/Implicit Interactions
  * It should be noted that the provided dataset contains __both implicit and explicit interactions:__
      * __Explicit Interaction:__ A user entered a rating of a certain book
      * __Implicit Interaction:__ All we know is that the user had read the book (but never bothered to share their opinion).
@@ -42,21 +42,48 @@
  * We can estimate the value of the confidence on the train set, using the model we trained, which is a common practice for recommender systems. In order to minimize a bias of such estimate, we can use a K-fold cross-validation procedure. 
  * We could potentially achieve a higher accuracy for the confidence estimates, by calculating the confidence to every reader individually:  $$\hat{C_{u}} = \frac{n^c_{u}}{n_{u}},$$ where $n_{u}$ is a total number of ratings left by the user, and $n^c_{u}$ is the number of the user propensities that our model guessed correctly.
 
-## Main Steps, with corresponding notebooks
+## Test Results
+
+ * When evaluated on the test set, our best trained SVD recommendation model (128 latent factors, 100 epochs, with some regularization) demonstrates a low bias:
+     * Avgerage Rating:           4.03
+     * Avgerage Predicted Rating: 4.02
+ * On the other hand, the __estimated accuracy of 65.85%__ suggests that our model suffers from a considerable variance. 
+ * With `MAE = 0.6681`, one can see that a substantial number of user-item recommendations get misclassified near the decision boundary ("no" corresponds to `rank < 4`; "yes" is for `rank >= 4`).
+ * The model's performance could be further improved with the use of one of data resampling techniques. This approach has a potential of lowering the variance, thereby boosting the overall accuracy.
+
+## Conclusions
+
+ * A matrix factorization-based recommendation model (SVD) trained on the "GoodReads" explicit book rating dataset showed the following performance:
+     * RMSE: 0.8599
+     * MAE:  0.6681
+     * FCP:  0.5855
+ * It proved to have a low bias but suffered from a considerable variance. 
+ * A binary classifier (propensity model) built based on the aforementioned recommendation system demostrated the accuracy of 65.85% on the test set. Further improvement could potentially be achieved through data resampling techniques.
+ * use of a DNN-based, or a hybrid model could lead to a better accuracy, especially if external features are incorporated.
+
+## Appendix: A Few Notes on the Main Steps
 
 ### 1. Download the data (`step_1_download_the_data.ipynb`)
 
-As a train/test data, we use the table of reader-book interactions for the genre "Fantasy/Paranormal", from the GoodReads public dataset.
+ * As a train/test data, we use the table of reader-book interactions for the genre "Fantasy/Paranormal", from the GoodReads public dataset.
 
 ### 2. Filter the records, and save them in a new file (`step_2_filter_the_data.ipynb`)
-     * Only the records from the year 2016
-     * Only the records where the rating is an integer number greater than zero (`raiting = 0` means no rating was provided)
-     
-     
+ * Only the records from the year 2016
+ * Only the records where the rating is an integer number greater than zero (`raiting = 0` means no rating was provided)
+    
 ### 3. Create the train/test datasets (`step_3_create_train_val_test_sets.ipynb`)
+ * Train Set: Book ratings for January - Novemver 2016
+ * Test Set: Book ratings for December 2016
 ### 4. Select the best model: compare different algorithms, tune hyperparameters, evaluate the performance (`step_4_select_evaluate_model_mf.ipynb`)
+ * Focus on evaluating two MF-based model types:
+     * SVD
+     * NMF
+ * Note: We do not consider the SVD++ model here, as it was designed to handle the implicit interactions, which we excluded from this study.
 ### 5. Create, train, and run a propensity model (`step_5_propensity_model.ipynb`)
-
+ * Create a `Propensity` class
+ * Train and evaluate a selected model
+ * Serve the results
+ 
 ## References & Citations
 
  * Mengting Wan, Julian McAuley, ["Item Recommendation on Monotonic Behavior Chains"](https://github.com/MengtingWan/mengtingwan.github.io/raw/master/paper/recsys18_mwan.pdf), in RecSys'18. [bibtex](https://dblp.uni-trier.de/rec/conf/recsys/WanM18.html?view=bibtex)
