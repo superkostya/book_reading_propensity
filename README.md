@@ -1,3 +1,15 @@
+# Propensity Model for Book Reading
+
+## Main Steps, with corresponding notebooks
+
+ 1. Download the data (`step_1_download_the_data.ipynb`)
+ 2. Filter the records, and save them in a new file (`step_2_filter_the_data.ipynb`)
+     * Only the records from the year 2016
+     * Only the records where the rating is an integer number greater than zero (`raiting = 0` means no rating was provided)
+ 3. Create the train/test datasets (`step_3_create_train_val_test_sets.ipynb`)
+ 4. Select the best model: compare different algorithms, tune hyperparameters, evaluate the performance (`step_4_select_evaluate_model_mf.ipynb`)
+ 5. Create, train, and run a propensity model (`step_5_propensity_model.ipynb`)
+
 ## Setting up the environment
 
 Installing the required libraries using pip:

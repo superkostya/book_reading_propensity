@@ -2,4 +2,6 @@ gdown
 scipy
 numpy
 pandas
+matplotlib
+scikit-learn
 scikit-surprise
