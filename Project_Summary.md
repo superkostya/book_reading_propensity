@@ -38,7 +38,7 @@
   * Our trained recommender can be easily converted into a propensity model, which is in essense, a binary classifier: it would ultimately generate a "yes or no" answer when asked if a reader X would like a book Y.
  * We define the confidence for the results of such propensity model as a probability that the model will make a correct prediction for the selected user-item pair.
  * As a first approximation, we can estimate this probability globally, for the entire dataset. 
- * If the validation set size is $n$ and the number of correct predictions is $n_c$, then a point estimate of the the confidence $C$ is $$\hat{C} = \frac{n_c}{n}$$
+ * If the validation set size is $n$ and the number of correct predictions is $n^c$, then a point estimate of the the confidence $C$ is $$\hat{C} = \frac{n^c}{n}$$
  * We can estimate the value of the confidence on the train set, using the model we trained, which is a common practice for recommender systems. In order to minimize a bias of such estimate, we can use a K-fold cross-validation procedure. 
  * We could potentially achieve a higher accuracy for the confidence estimates, by calculating the confidence to every reader individually:  $$\hat{C_{u}} = \frac{n^c_{u}}{n_{u}},$$ where $n_{u}$ is a total number of ratings left by the user, and $n^c_{u}$ is the number of the user propensities that our model guessed correctly. This of course, can only be applied to a known reader. For the case of a "cold start", we have to rely on the global estimate $C$.
  * In the current implementation, the confidence is estimated as a weighted average of the global and user-based confidence levels: $$\hat{C_{u}} = \frac{n_{min} C + n^c_{u}}{n_{min} + n_{u}},$$ where $n_{min}$ is the minimal necessary number of ratings.
@@ -48,7 +48,7 @@
  * When evaluated on the test set, our best trained SVD recommendation model (128 latent factors, 100 epochs, with some regularization) demonstrates a low bias:
      * Avgerage Rating:           4.03
      * Avgerage Predicted Rating: 4.02
- * On the other hand, the __estimated accuracy of 65.85%__ suggests that our model suffers from a considerable variance. 
+ * On the other hand, the __estimated accuracy of 65.85%__ (lower bound estimate) suggests that our model suffers from a considerable variance. 
  * With `MAE = 0.6681`, one can see that a substantial number of user-item recommendations get misclassified near the decision boundary ("no" corresponds to `rank < 4`; "yes" is for `rank >= 4`).
  * The model's performance could be further improved with the use of one of data resampling techniques. This approach has a potential of lowering the variance, thereby boosting the overall accuracy.
 
