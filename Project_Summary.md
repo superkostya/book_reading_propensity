@@ -1,18 +1,32 @@
 # Propensity Model for Book Reading
 
 ## Goals:
- * Based on the book ratings given by readers January through November 2016, predict the propensities for December 2016.
- * Also, estimate the confidence for such predictions
+ * Based on the book ratings given by readers for a period of January through November 2016, predict the book reading propensities in the following month (December 2016).
+ * Estimate the confidence for such predictions.
  
 ## Methodology
+### Propensity Model as a Recommender System
  * Considering the nature of the provided data (book ratings offered by readers), this problem lands itself with the recommendation systems.
  * Specifically, a broad class of recommenders known as "collaborative filtering" appears to be the best first step towards predicting book propensities, based entirely on so called "user-item interactions".
+### Explicit/Implicit Interactions
  * It should be noted that the provided dataset contains __both implicit and explicit interactions:__
-     * __Explicit Interaction:__ A user entered an actual rating of a certain book
-     * __Implicit Interaction:__ A user had read the book, but never bothered to rate it
+     * __Explicit Interaction:__ A user entered a rating of a certain book
+     * __Implicit Interaction:__ All we know is that the user had read the book (but never bothered to share their opinion).
  * Some methods allow including implicit interactions (e.g., SVD++); some were not built for that.
  * For the sake of simplicity, we will henceforth __focus entirely on the explicit interactions.__ In practice, this means that we drop all rows with `rating = 0`.
- * In the field of the collaborative filtering, there are 
+### Choosing the Method
+ * In the field of the collaborative filtering, there are several major strategies. The ones that are considered most competitive are as follows:
+     * __Matrix Factorization__-based (MF) algorithms
+     * __Deep Neural Network (DNN)__ models
+     * __Hybrid__ models
+ * In this project, we will focus on the __Matrix Factorization__-based models. Let us briefly list their pros and cons:
+     * __Pros:__ 
+         * Known to be able to produce quite accurate predictions, through finding the "latent factors"
+         * Scalable, during both training and serving
+         * Can handle the issue of "folding" (spurious predictions that occur when different clusters happen to be close to each other in the embedding space, purely by chance) that DNN models may suffer from
+     * __Cons:__ 
+         * Originally MF models could not handle the issue of the "cold start": a situation when a trained model is queried with previously unseen user/item. (Solution: Therre exist heuristic methods, e.g. average embeddings, that help handle this problem)
+         * MF models cannot include external features, i.e. anything other than user-item interactions. This imposes a limitation on how much can be learned from the data, and explains why DNN models sometimes outperform the MF-based recommenders
 
 ## Main Steps, with corresponding notebooks
 
